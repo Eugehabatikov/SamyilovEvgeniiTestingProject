@@ -5,10 +5,9 @@ public class Polynom {
     private static final String CHECKER = "([+-])([0-9])?%s";
     private static final String VARIABLE = "x";
 
-    private Map<Integer, Integer> coefficients = new TreeMap<>(Comparator.reverseOrder());
+    private TreeMap<Integer, Integer> coefficients = new TreeMap<>(Comparator.reverseOrder());
 
     public Polynom(String statement) {
-        checkString();
         String[] rawMembers = statement.split(String.format(LOOK_AROUND, "[+-]"));
         for (String member : rawMembers) {
             if (member.length() == 0)
@@ -37,36 +36,110 @@ public class Polynom {
         }
     }
 
-    private void checkString() {
-//TODO
-    }
+
+
+    /**
+     * Добавление к текущему полиному заданного
+     * @param polynomial
+     * @return
+     */
 
     public Polynom add(Polynom polynomial) {
         polynomial.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
         return this;
     }
 
+    /**
+     *Вычитание из текущего полинома заданного
+     * @param polynomial
+     * @return
+     */
     public Polynom subtract(Polynom polynomial) {
         polynomial.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC - oldC));
         return this;
     }
 
+    /**
+     * Умножение полинома на полином
+     * @param polynomial
+     * @return
+     */
     public Polynom multiply(Polynom polynomial) {
-        Map<Integer, Integer> newCoefficients = new TreeMap<>(Comparator.reverseOrder());
+        TreeMap<Integer, Integer> newCoefficients = new TreeMap<>(Comparator.reverseOrder());
         coefficients.forEach((p1, c1) -> polynomial.coefficients.forEach((p2, c2) -> newCoefficients
-                .merge(p1 * p2, c1 * c2, (oldC, newC) -> oldC + newC)));
+                .merge(p1 + p2, c1 * c2, (oldC, newC) -> oldC + newC)));
+        coefficients= newCoefficients;
+        return this;
+    }
+
+    /**
+     * Деление текущего полинома на заданный
+     * @param other
+     * @return
+     */
+    public Polynom divide(Polynom other) {
+        TreeMap<Integer, Integer> newCoefficients = new TreeMap(Comparator.reverseOrder());
+        while (coefficients.size() != 0 && coefficients.firstKey() != 0) { // выполняю пока не уйдет Х
+            if (other.coefficients.firstKey() <= coefficients.firstKey()) { // выполняю если старшая степень делителя <= моей
+                Polynom divisor = other.copy();
+                int coefficient = coefficients.get(coefficients.firstKey()) /
+                        divisor.coefficients.get(divisor.coefficients.firstKey());
+                int degree = coefficients.firstKey() - divisor.coefficients.firstKey();
+                newCoefficients.merge(degree, coefficient, (oldC, newC) -> oldC + newC);
+                divisor.multiply(new Polynom(coefficient + VARIABLE + degree));
+                this.subtract(divisor);
+//ниже написан итератор, который удаляет все ячейки с нулевыми занчениями(важно!!)
+                for (Iterator<Map.Entry<Integer, Integer>> it = coefficients.entrySet().iterator(); it.hasNext(); ) {
+                    Map.Entry<Integer, Integer> entry = it.next();
+                    if (entry.getValue().equals(0)) {
+                        it.remove();
+                    }
+                }
+//^ вот это итератор
+            } else break;
+        }
         coefficients = newCoefficients;
         return this;
     }
 
-    public Polynom divide(Polynom polynomial) {
-        polynomial.coefficients.forEach((p1, c1) -> coefficients.computeIfPresent(p1, (oldC, newC) -> oldC / newC));
-        return this;
+    public Polynom copy() {
+        Polynom copy = new Polynom("");
+        copy.add(this);
+        return copy;
     }
 
-    public Polynom modulo(Polynom polynomial) {
-        polynomial.coefficients.forEach((p1, c1) -> coefficients.computeIfPresent(p1, (oldC, newC) -> oldC % newC));
-        return this;
+    /**
+     * получение остатка от деления одного полинома на другой
+     *
+     * @param other
+     * @return
+     */
+    public int modulo(Polynom other) {
+        TreeMap<Integer, Integer> newCoefficients = new TreeMap(Comparator.reverseOrder());
+        while (coefficients.size() != 0 && coefficients.firstKey() != 0) { // выполняю пока не уйдет Х
+            if (other.coefficients.firstKey() <= coefficients.firstKey()) { // выполняю если старшая степень делителя <= моей
+                Polynom divisor = other.copy();
+                int coefficient = coefficients.get(coefficients.firstKey()) /
+                        divisor.coefficients.get(divisor.coefficients.firstKey());
+                int degree = coefficients.firstKey() - divisor.coefficients.firstKey();
+                newCoefficients.merge(degree, coefficient, (oldC, newC) -> oldC + newC);
+                divisor.multiply(new Polynom(coefficient + VARIABLE + degree));
+                this.subtract(divisor);
+//ниже написан итератор, который удаляет все ячейки с нулевыми занчениями(важно!!)
+                for (Iterator<Map.Entry<Integer, Integer>>it = coefficients.entrySet().iterator();
+                     it.hasNext(); ){
+                    Map.Entry<Integer, Integer> entry = it.next();
+                    if (entry.getValue().equals(0)) {
+                        it.remove();
+                    }
+                }
+//^ вот это итератор
+            } else break;
+        }
+        int result = coefficients.size() == 1 ?
+                coefficients.get(coefficients.firstKey()) : 0;
+
+        return result;
     }
 
     @Override
@@ -86,9 +159,18 @@ public class Polynom {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         coefficients.forEach((p, c) -> {
-            if (c > 0) builder.append("+" + c).append(VARIABLE).append(p);
-            else   builder.append(c).append(VARIABLE).append(p);
-                });
+            if (c != 0) {
+                if (c > 0 && builder.length() > 0)
+                    builder.append("+");
+                builder.append(c);
+
+                if (p != 0) {
+                    builder.append(VARIABLE);
+                    if (p != 1)
+                        builder.append(p);
+                }
+            }
+        });
 
         return builder.toString();
     }
