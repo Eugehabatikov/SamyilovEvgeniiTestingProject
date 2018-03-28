@@ -1,12 +1,22 @@
+package org.spbstu.samuilovEvgen;
+
 import java.util.*;
 
 public class Polynom {
     private static final String LOOK_AROUND = "(?=%s)";
-    private static final String CHECKER = "([+-])([0-9])?%s";
     private static final String VARIABLE = "x";
 
     private TreeMap<Integer, Integer> coefficients = new TreeMap<>(Comparator.reverseOrder());
 
+    /**
+     *
+     parses a string in the format
+     * cxd
+     x -variable
+     c-coefficient
+     d-degree
+     * @param statement
+     */
     public Polynom(String statement) {
         String[] rawMembers = statement.split(String.format(LOOK_AROUND, "[+-]"));
         for (String member : rawMembers) {
@@ -36,70 +46,93 @@ public class Polynom {
         }
     }
 
-
-
     /**
-     * Добавление к текущему полиному заданного
-     * @param polynomial
-     * @return
-     */
-
-    public Polynom add(Polynom polynomial) {
-        polynomial.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
-        return this;
-    }
-
-    /**
-     *Вычитание из текущего полинома заданного
-     * @param polynomial
-     * @return
-     */
-    public Polynom subtract(Polynom polynomial) {
-        polynomial.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC - oldC));
-        return this;
-    }
-
-    /**
-     * Умножение полинома на полином
-     * @param polynomial
-     * @return
-     */
-    public Polynom multiply(Polynom polynomial) {
-        TreeMap<Integer, Integer> newCoefficients = new TreeMap<>(Comparator.reverseOrder());
-        coefficients.forEach((p1, c1) -> polynomial.coefficients.forEach((p2, c2) -> newCoefficients
-                .merge(p1 + p2, c1 * c2, (oldC, newC) -> oldC + newC)));
-        coefficients= newCoefficients;
-        return this;
-    }
-
-    /**
-     * Деление текущего полинома на заданный
+     *Adding to the current polynomial a given
      * @param other
-     * @return
+     * @return new polynom
+     */
+
+    public Polynom add(Polynom other) {
+        Polynom result = new Polynom(this);
+        other.coefficients.forEach((p, c) -> result.coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
+        return result;
+    }
+
+
+    /**
+     Subtraction from the current polynomial of the given
+     * @param other
+     * @return new polynom
+     */
+    public Polynom subtract(Polynom other) {
+        Polynom result = new Polynom(this);
+        other.coefficients.forEach((p, c) -> result.coefficients.merge(p, c, (newC, oldC) -> newC - oldC));
+        return result;
+    }
+
+    /**
+     *
+     calculates the value for a given x
+     * @param x
+     * @return number
+     */
+    public int Calculate(int x) {
+        int result = 0;
+        for (Iterator<Map.Entry<Integer, Integer>> it = coefficients.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Integer, Integer> entry = it.next();
+            result += Math.pow(x, entry.getKey()) * entry.getValue();
+        }
+        return result;
+    }
+    /**
+     *Multiplication of a polynomial on a polynomial
+     * @param other
+     * @return new  polynom
+     */
+    public Polynom multiply(Polynom other) {
+        Polynom result = new Polynom("");
+        coefficients.forEach((p1, c1) -> other.coefficients.forEach((p2, c2) ->
+                result.coefficients.merge(p1 + p2, c1 * c2, (oldC, newC) -> oldC + newC)));
+        return result;
+    }
+
+    /**
+     *Divide the current polynomial by a given
+     * @param other
+     * @return new polynom
      */
     public Polynom divide(Polynom other) {
-        TreeMap<Integer, Integer> newCoefficients = new TreeMap(Comparator.reverseOrder());
-        while (coefficients.size() != 0 && coefficients.firstKey() != 0) { // выполняю пока не уйдет Х
-            if (other.coefficients.firstKey() <= coefficients.firstKey()) { // выполняю если старшая степень делителя <= моей
-                Polynom divisor = other.copy();
-                int coefficient = coefficients.get(coefficients.firstKey()) /
-                        divisor.coefficients.get(divisor.coefficients.firstKey());
-                int degree = coefficients.firstKey() - divisor.coefficients.firstKey();
-                newCoefficients.merge(degree, coefficient, (oldC, newC) -> oldC + newC);
-                divisor.multiply(new Polynom(coefficient + VARIABLE + degree));
-                this.subtract(divisor);
-//ниже написан итератор, который удаляет все ячейки с нулевыми занчениями(важно!!)
-                for (Iterator<Map.Entry<Integer, Integer>> it = coefficients.entrySet().iterator(); it.hasNext(); ) {
-                    Map.Entry<Integer, Integer> entry = it.next();
-                    if (entry.getValue().equals(0)) {
-                        it.remove();
-                    }
+        Polynom dividend = new Polynom(this);
+        Polynom divisor;
+        Polynom multiplier;
+        Polynom result = new Polynom("");
+
+        while (dividend.coefficients.size() != 0
+                && dividend.coefficients.firstKey() != 0
+                && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
+
+            int coefficient = dividend.coefficients.get(dividend.coefficients.firstKey()) /
+                    other.coefficients.get(other.coefficients.firstKey());
+            int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
+
+            multiplier = new Polynom(coefficient + VARIABLE + degree);
+            result = result.add(multiplier);
+            divisor = other.multiply(multiplier);
+            dividend = dividend.subtract(divisor);
+
+            for (Iterator<Map.Entry<Integer, Integer>> it = dividend.coefficients.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<Integer, Integer> entry = it.next();
+                if (entry.getValue() == 0) {
+                    it.remove();
                 }
-//^ вот это итератор
-            } else break;
+            }
         }
-        coefficients = newCoefficients;
-        return this;
+
+        return result;
+    }
+    private Polynom(Polynom other) {
+        coefficients = new TreeMap<Integer, Integer>(Comparator.reverseOrder());
+        other.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
     }
 
     public Polynom copy() {
@@ -109,15 +142,14 @@ public class Polynom {
     }
 
     /**
-     * получение остатка от деления одного полинома на другой
-     *
+     *getting the remainder from dividing one polynomial to another
      * @param other
-     * @return
+     * @return new polynom polynom
      */
     public int modulo(Polynom other) {
         TreeMap<Integer, Integer> newCoefficients = new TreeMap(Comparator.reverseOrder());
-        while (coefficients.size() != 0 && coefficients.firstKey() != 0) { // выполняю пока не уйдет Х
-            if (other.coefficients.firstKey() <= coefficients.firstKey()) { // выполняю если старшая степень делителя <= моей
+        while (coefficients.size() != 0 && coefficients.firstKey() != 0) {
+            if (other.coefficients.firstKey() <= coefficients.firstKey()) {
                 Polynom divisor = other.copy();
                 int coefficient = coefficients.get(coefficients.firstKey()) /
                         divisor.coefficients.get(divisor.coefficients.firstKey());
@@ -125,7 +157,6 @@ public class Polynom {
                 newCoefficients.merge(degree, coefficient, (oldC, newC) -> oldC + newC);
                 divisor.multiply(new Polynom(coefficient + VARIABLE + degree));
                 this.subtract(divisor);
-//ниже написан итератор, который удаляет все ячейки с нулевыми занчениями(важно!!)
                 for (Iterator<Map.Entry<Integer, Integer>>it = coefficients.entrySet().iterator();
                      it.hasNext(); ){
                     Map.Entry<Integer, Integer> entry = it.next();
@@ -133,7 +164,6 @@ public class Polynom {
                         it.remove();
                     }
                 }
-//^ вот это итератор
             } else break;
         }
         int result = coefficients.size() == 1 ?
