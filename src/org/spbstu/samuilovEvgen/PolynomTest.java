@@ -79,18 +79,18 @@ public class PolynomTest {
     @Test
     public void modulo1() {
         polynom = new Polynom("x2+2x+2");
-        assertEquals(new Polynom("1"), polynom.modulo(new Polynom("x+1")));
+        assertEquals("1", polynom.modulo(new Polynom("x+1")).toString());
     }
 
     @Test
     public void modulo2() {
         polynom = new Polynom("x3+3x2+4x+2");
-        assertEquals(new Polynom("1x+1"), polynom.modulo(new Polynom("x2+2x+1")));
+        assertEquals("1x+1", polynom.modulo(new Polynom("x2+2x+1")).toString());
     }
-/*
+
     @Test
     public void Calculate() {
-        polynom = new Polynom("100");
-        assertEquals(new Polynom("1000"), polynom.Calculate(new Polynom()));
+        polynom = new Polynom("x2");
+        assertEquals(10000, polynom.Calculate(100));
     }
-*/}
+}

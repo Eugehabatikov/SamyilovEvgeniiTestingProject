@@ -146,32 +146,11 @@ public class Polynom {
      * @param other
      * @return new polynom polynom
      */
-    public int modulo(Polynom other) {
-        TreeMap<Integer, Integer> newCoefficients = new TreeMap(Comparator.reverseOrder());
-        while (coefficients.size() != 0 && coefficients.firstKey() != 0) {
-            if (other.coefficients.firstKey() <= coefficients.firstKey()) {
-                Polynom divisor = other.copy();
-                int coefficient = coefficients.get(coefficients.firstKey()) /
-                        divisor.coefficients.get(divisor.coefficients.firstKey());
-                int degree = coefficients.firstKey() - divisor.coefficients.firstKey();
-                newCoefficients.merge(degree, coefficient, (oldC, newC) -> oldC + newC);
-                divisor.multiply(new Polynom(coefficient + VARIABLE + degree));
-                this.subtract(divisor);
-                for (Iterator<Map.Entry<Integer, Integer>>it = coefficients.entrySet().iterator();
-                     it.hasNext(); ){
-                    Map.Entry<Integer, Integer> entry = it.next();
-                    if (entry.getValue().equals(0)) {
-                        it.remove();
-                    }
-                }
-            } else break;
-        }
-        int result = coefficients.size() == 1 ?
-                coefficients.get(coefficients.firstKey()) : 0;
-
+    public Polynom modulo(Polynom other){
+        Polynom result = subtract(other.multiply(divide(other)));
         return result;
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
