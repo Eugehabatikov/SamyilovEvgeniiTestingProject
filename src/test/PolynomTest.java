@@ -1,6 +1,11 @@
-package org.spbstu.samuilovEvgen;
+package test;
+
 import org.junit.jupiter.api.Test;
+import org.spbstu.samuilovEvgen.Polynom;
+
 import static org.junit.jupiter.api.Assertions.*;
+
+import org.spbstu.samuilovEvgen.Polynom;
 
 public class PolynomTest {
 
@@ -48,8 +53,8 @@ public class PolynomTest {
 
     @Test
     public void subtract1() {
-        polynom = new Polynom("2x");
-        assertEquals(new Polynom("1x"), polynom.subtract(new Polynom("1x")));
+        polynom = new Polynom("x2+1");
+        assertEquals(new Polynom("x2+2x+1"), polynom.subtract(new Polynom("-2x")));
     }
 
     @Test
@@ -89,8 +94,8 @@ public class PolynomTest {
     }
 
     @Test
-    public void Calculate() {
+    public void calculate() {
         polynom = new Polynom("x2");
-        assertEquals(10000, polynom.Calculate(100));
+        assertEquals(10000, polynom.calculate(100));
     }
 }

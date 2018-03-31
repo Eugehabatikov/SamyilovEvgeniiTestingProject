@@ -3,22 +3,23 @@ package org.spbstu.samuilovEvgen;
 import java.util.*;
 
 public class Polynom {
-    private static final String LOOK_AROUND = "(?=%s)";
     private static final String VARIABLE = "x";
 
     private TreeMap<Integer, Integer> coefficients = new TreeMap<>(Comparator.reverseOrder());
 
     /**
-     *
-     parses a string in the format
+     * parses a string in the format
      * cxd
-     x -variable
-     c-coefficient
-     d-degree
-     * @param statement
+     * x -variable
+     * c-coefficient
+     * d-degree
+     * example: 2x3+2x2
+     * statement must be writed without spaces
+     *
+     * @param statement string which will be fragmentation on parts of polynoim
      */
     public Polynom(String statement) {
-        String[] rawMembers = statement.split(String.format(LOOK_AROUND, "[+-]"));
+        String[] rawMembers = statement.split(String.format("(?=%s)", "[+-]"));
         for (String member : rawMembers) {
             if (member.length() == 0)
                 continue;
@@ -47,8 +48,9 @@ public class Polynom {
     }
 
     /**
-     *Adding to the current polynomial a given
-     * @param other
+     * Adding to the current polynomial a given
+     *
+     * @param other the polynomial added to the original
      * @return new polynom
      */
 
@@ -60,33 +62,34 @@ public class Polynom {
 
 
     /**
-     Subtraction from the current polynomial of the given
-     * @param other
+     * Subtraction from the current polynomial of the given
+     * @param other polynomial, subtracted from the original
      * @return new polynom
      */
     public Polynom subtract(Polynom other) {
         Polynom result = new Polynom(this);
-        other.coefficients.forEach((p, c) -> result.coefficients.merge(p, c, (newC, oldC) -> newC - oldC));
+        other.coefficients.forEach((p, c) -> result.coefficients.merge(p, -c, (newC, oldC) -> newC + oldC));
         return result;
     }
 
     /**
+     * calculates the value for a given x
      *
-     calculates the value for a given x
-     * @param x
+     * @param x calculated in the method
      * @return number
      */
-    public int Calculate(int x) {
-        int result = 0;
-        for (Iterator<Map.Entry<Integer, Integer>> it = coefficients.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<Integer, Integer> entry = it.next();
+    public long calculate(int x) {
+        long result = 0;
+        for (Map.Entry<Integer, Integer> entry : coefficients.entrySet()) {
             result += Math.pow(x, entry.getKey()) * entry.getValue();
         }
         return result;
     }
+
     /**
-     *Multiplication of a polynomial on a polynomial
-     * @param other
+     * Multiplication of a polynomial on a polynomial
+     *
+     * @param other polynomial, multiplied by the original
      * @return new  polynom
      */
     public Polynom multiply(Polynom other) {
@@ -97,8 +100,9 @@ public class Polynom {
     }
 
     /**
-     *Divide the current polynomial by a given
-     * @param other
+     * Divide the current polynomial by a given
+     *
+     * @param other polynomial to which the original
      * @return new polynom
      */
     public Polynom divide(Polynom other) {
@@ -111,8 +115,8 @@ public class Polynom {
                 && dividend.coefficients.firstKey() != 0
                 && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
 
-            int coefficient = dividend.coefficients.get(dividend.coefficients.firstKey()) /
-                    other.coefficients.get(other.coefficients.firstKey());
+            int coefficient = dividend.coefficients.firstEntry().getValue() /
+                    other.coefficients.firstEntry().getValue();
             int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
 
             multiplier = new Polynom(coefficient + VARIABLE + degree);
@@ -120,37 +124,27 @@ public class Polynom {
             divisor = other.multiply(multiplier);
             dividend = dividend.subtract(divisor);
 
-            for (Iterator<Map.Entry<Integer, Integer>> it = dividend.coefficients.entrySet().iterator(); it.hasNext(); ) {
-                Map.Entry<Integer, Integer> entry = it.next();
-                if (entry.getValue() == 0) {
-                    it.remove();
-                }
-            }
+            dividend.coefficients.entrySet().removeIf(entry -> entry.getValue() == 0);
         }
 
         return result;
     }
+
     private Polynom(Polynom other) {
         coefficients = new TreeMap<Integer, Integer>(Comparator.reverseOrder());
         other.coefficients.forEach((p, c) -> coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
     }
 
-    public Polynom copy() {
-        Polynom copy = new Polynom("");
-        copy.add(this);
-        return copy;
-    }
-
     /**
-     *getting the remainder from dividing one polynomial to another
-     * @param other
+     * getting the remainder from dividing one polynomial to another
+     *
+     * @param other polynomial to which the original
      * @return new polynom polynom
      */
-    public Polynom modulo(Polynom other){
-        Polynom result = subtract(other.multiply(divide(other)));
-        return result;
+    public Polynom modulo(Polynom other) {
+        return subtract(other.multiply(divide(other)));
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
