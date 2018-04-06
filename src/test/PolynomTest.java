@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.spbstu.samuilovEvgen.Polynom;
 
+import java.math.BigInteger;
+
 public class PolynomTest {
 
     Polynom polynom;
@@ -96,6 +98,15 @@ public class PolynomTest {
     @Test
     public void calculate() {
         polynom = new Polynom("x2");
-        assertEquals(10000, polynom.calculate(100));
+        assertEquals(new BigInteger("10000"), polynom.calculate(new BigInteger("100")));
     }
+
+    @Test
+    public void calculate2() {
+        polynom = new Polynom("x100");
+        assertEquals(new BigInteger("1000000000000000000000000000000000000000000000" +
+                "000000000000000000000000000000000000000000000000000" +
+                "0000"), polynom.calculate(new BigInteger("10")));
+    }
+
 }

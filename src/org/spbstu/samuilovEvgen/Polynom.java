@@ -1,10 +1,10 @@
 package org.spbstu.samuilovEvgen;
 
+import java.math.BigInteger;
 import java.util.*;
 
 public class Polynom {
     private static final String VARIABLE = "x";
-
     private TreeMap<Integer, Integer> coefficients = new TreeMap<>(Comparator.reverseOrder());
 
     /**
@@ -19,7 +19,7 @@ public class Polynom {
      * @param statement string which will be fragmentation on parts of polynoim
      */
     public Polynom(String statement) {
-        String[] rawMembers = statement.split(String.format("(?=%s)", "[+-]"));
+        String[] rawMembers = statement.split("(?=[+-])");
         for (String member : rawMembers) {
             if (member.length() == 0)
                 continue;
@@ -63,6 +63,7 @@ public class Polynom {
 
     /**
      * Subtraction from the current polynomial of the given
+     *
      * @param other polynomial, subtracted from the original
      * @return new polynom
      */
@@ -78,10 +79,14 @@ public class Polynom {
      * @param x calculated in the method
      * @return number
      */
-    public long calculate(int x) {
-        long result = 0;
+    public BigInteger calculate(BigInteger x) {
+        BigInteger result = new BigInteger("0");
+        if (x.equals(new BigInteger("0"))) {
+            result = result.add(new BigInteger(coefficients.get(0).toString()));
+            return result;
+        }
         for (Map.Entry<Integer, Integer> entry : coefficients.entrySet()) {
-            result += Math.pow(x, entry.getKey()) * entry.getValue();
+            result = result.add(x.pow(entry.getKey()).multiply(new BigInteger(entry.getValue().toString())));
         }
         return result;
     }
@@ -110,22 +115,29 @@ public class Polynom {
         Polynom divisor;
         Polynom multiplier;
         Polynom result = new Polynom("");
-
-        while (dividend.coefficients.size() != 0
-                && dividend.coefficients.firstKey() != 0
-                && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
-
-            int coefficient = dividend.coefficients.firstEntry().getValue() /
-                    other.coefficients.firstEntry().getValue();
-            int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
-
-            multiplier = new Polynom(coefficient + VARIABLE + degree);
-            result = result.add(multiplier);
-            divisor = other.multiply(multiplier);
-            dividend = dividend.subtract(divisor);
-
-            dividend.coefficients.entrySet().removeIf(entry -> entry.getValue() == 0);
+        if (other.calculate(new BigInteger("1")).equals(new BigInteger("0"))) {
+            throw new IllegalArgumentException("делить на нуль нельзя");
         }
+
+        if (calculate(new BigInteger("1")).equals(new BigInteger("0"))){
+            return new Polynom("0");
+        }
+
+            while (dividend.coefficients.size() != 0
+                    && dividend.coefficients.firstKey() != 0
+                    && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
+
+                int coefficient = dividend.coefficients.firstEntry().getValue() /
+                        other.coefficients.firstEntry().getValue();
+                int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
+
+                multiplier = new Polynom(coefficient + VARIABLE + degree);
+                result = result.add(multiplier);
+                divisor = other.multiply(multiplier);
+                dividend = dividend.subtract(divisor);
+
+                dividend.coefficients.entrySet().removeIf(entry -> entry.getValue() == 0);
+            }
 
         return result;
     }
