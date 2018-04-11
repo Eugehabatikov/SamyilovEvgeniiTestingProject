@@ -57,6 +57,7 @@ public class Polynom {
     public Polynom add(Polynom other) {
         Polynom result = new Polynom(this);
         other.coefficients.forEach((p, c) -> result.coefficients.merge(p, c, (newC, oldC) -> newC + oldC));
+        result.coefficients.entrySet().removeIf(entry -> !entry.getKey().equals(0) && entry.getValue().equals(0));
         return result;
     }
 
@@ -70,6 +71,7 @@ public class Polynom {
     public Polynom subtract(Polynom other) {
         Polynom result = new Polynom(this);
         other.coefficients.forEach((p, c) -> result.coefficients.merge(p, -c, (newC, oldC) -> newC + oldC));
+        result.coefficients.entrySet().removeIf(entry -> !entry.getKey().equals(0) && entry.getValue().equals(0));
         return result;
     }
 
@@ -101,6 +103,7 @@ public class Polynom {
         Polynom result = new Polynom("");
         coefficients.forEach((p1, c1) -> other.coefficients.forEach((p2, c2) ->
                 result.coefficients.merge(p1 + p2, c1 * c2, (oldC, newC) -> oldC + newC)));
+        result.coefficients.entrySet().removeIf(entry -> !entry.getKey().equals(0) && entry.getValue().equals(0));
         return result;
     }
 
@@ -115,30 +118,26 @@ public class Polynom {
         Polynom divisor;
         Polynom multiplier;
         Polynom result = new Polynom("");
-        if (other.calculate(new BigInteger("1")).equals(new BigInteger("0"))) {
-            throw new IllegalArgumentException("делить на нуль нельзя");
+        if (other.equals(new Polynom("0"))) {
+            throw new IllegalArgumentException();
         }
-
-        if (calculate(new BigInteger("1")).equals(new BigInteger("0"))){
+        if (this.equals(new Polynom("0"))) {
             return new Polynom("0");
         }
+        while (dividend.coefficients.size() != 0
+                && dividend.coefficients.firstKey() != 0
+                && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
 
-            while (dividend.coefficients.size() != 0
-                    && dividend.coefficients.firstKey() != 0
-                    && dividend.coefficients.firstKey() >= other.coefficients.firstKey()) {
+            int coefficient = dividend.coefficients.firstEntry().getValue() /
+                    other.coefficients.firstEntry().getValue();
+            int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
 
-                int coefficient = dividend.coefficients.firstEntry().getValue() /
-                        other.coefficients.firstEntry().getValue();
-                int degree = dividend.coefficients.firstKey() - other.coefficients.firstKey();
-
-                multiplier = new Polynom(coefficient + VARIABLE + degree);
-                result = result.add(multiplier);
-                divisor = other.multiply(multiplier);
-                dividend = dividend.subtract(divisor);
-
-                dividend.coefficients.entrySet().removeIf(entry -> entry.getValue() == 0);
-            }
-
+            multiplier = new Polynom(coefficient + VARIABLE + degree);
+            result = result.add(multiplier);
+            divisor = other.multiply(multiplier);
+            dividend = dividend.subtract(divisor);
+            dividend.coefficients.entrySet().removeIf(entry -> entry.getValue() == 0);
+        }
         return result;
     }
 
