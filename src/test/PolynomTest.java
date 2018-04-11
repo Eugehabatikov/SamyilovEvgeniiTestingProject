@@ -72,17 +72,28 @@ public class PolynomTest {
     }
 
     @Test
-    public void divide() {
-        polynom = new Polynom("x2+2x+1");
-        assertEquals(new Polynom("1x+1"), polynom.divide(new Polynom("x+1")));
-    }
-
-    @Test
     public void divide2() {
         polynom = new Polynom("x3+3x2+4x+1");
         assertEquals(new Polynom("1x2+2x+2"), polynom.divide(new Polynom("x+1")));
     }
 
+    @Test
+    public void divide3() {
+        polynom = new Polynom("x2+2x+1");
+        assertEquals(new Polynom("1x+1"), polynom.divide(new Polynom("x+1")));
+    }
+
+    @Test
+    public void divideByZero() {
+        polynom = new Polynom("x2+2x+1");
+        assertThrows(IllegalArgumentException.class, () -> polynom.divide(new Polynom("0")));
+    }
+
+    @Test
+    public void divideZero() {
+        polynom = new Polynom("0");
+        assertEquals(new Polynom("0"), polynom.divide(new Polynom("x+1")));
+    }
     @Test
     public void modulo1() {
         polynom = new Polynom("x2+2x+2");
@@ -108,5 +119,6 @@ public class PolynomTest {
                 "000000000000000000000000000000000000000000000000000" +
                 "0000"), polynom.calculate(new BigInteger("10")));
     }
+
 
 }
